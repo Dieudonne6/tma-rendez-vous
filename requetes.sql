@@ -31,6 +31,18 @@ WHERE h.ancien_statut = 'annule'
   AND h.nouveau_statut <> 'annule'
 ORDER BY h.modifie_le;
 
+-- TMA-104 (diagnostic) : annulations par mois et délai minimal avant le rendez-vous.
+--   Jusqu'au 03/10 des annulations à 30 h et 39 h passent ; ensuite, plus aucune.
+SELECT DATE_FORMAT(h.modifie_le, '%Y-%m') AS mois,
+       COUNT(*) AS annulations,
+       ROUND(MIN(TIMESTAMPDIFF(MINUTE, h.modifie_le, r.date_heure)) / 60, 1) AS delai_min_heures,
+       MAX(h.modifie_le) AS derniere
+FROM historique_statuts h
+JOIN rendez_vous r ON r.id = h.rendez_vous_id
+WHERE h.nouveau_statut = 'annule'
+GROUP BY 1
+ORDER BY 1;
+
 -- Bonus 1 : NPI qui ne comportent pas exactement 10 chiffres.
 SELECT id, npi, CHAR_LENGTH(npi) AS longueur, service, date_heure, statut
 FROM rendez_vous
